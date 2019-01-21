@@ -1,9 +1,10 @@
 from flask import render_template, request, Blueprint, redirect, url_for, flash
 from flask_login import login_user, current_user, logout_user, login_required
-from flaskblog.user.forms import RegistrationForm, LoginForm
+from flaskblog.user.forms import RegistrationForm, LoginForm, UpdateAccountForm
 from flaskblog import db, bcrypt
 from flaskblog.models.user import User
 from flaskblog.models.post import Post
+from flaskblog.user.utils import save_picture
 
 user: Blueprint = Blueprint('user', __name__)
 
@@ -38,3 +39,29 @@ def login():
         else:
             flash('Login unsuccessful, Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=login_form)
+
+
+@user.route("/logout")
+def logout():
+    logout_user()
+    return redirect(url_for('main.home'))
+
+
+@user.route("/account", methods=['GET', 'POST'])
+def account():
+    form = UpdateAccountForm()
+    if form.validate_on_submit():
+        if form.picture.data:
+            picture_file = save_picture(form.picture.data)
+            current_user.image_file = picture_file
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        db.session.commit()
+        flash('Your account has been updated!', 'success')
+        return redirect(url_for('users.account'))
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+    return render_template('account.html', title='Account',
+                           image_file=image_file, form=form)

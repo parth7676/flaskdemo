@@ -3,10 +3,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flaskblog.config import Config
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
+from flask_mail import Mail
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 login_manager = LoginManager()
+mail = Mail()
 
 
 def create_app(config_class=Config):
@@ -22,6 +24,8 @@ def create_app(config_class=Config):
     # Initialize login manager
     login_manager.init_app(app)
     login_manager.login_view = 'login'
+    # Initialize mail
+    mail.init_app(app)
 
     # Register Routes
     from flaskblog.main.routes import main
